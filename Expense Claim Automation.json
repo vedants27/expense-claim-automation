@@ -1,0 +1,826 @@
+{
+  "name": "Expense Claim Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Employee Expense Claim",
+        "formDescription": "Submit your expense details for automatic validation and tracking. Enter the amount in INR.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Claim ID",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Employee Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Amount",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Category",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Description",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "id": "df093e94-4a34-4201-abbe-2f1ec81d01d9",
+      "name": "On form submission",
+      "webhookId": "dca8c3bb-5c05-4af6-aecc-a19a9fd1bb57"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "d59011e7-59c0-46c3-a2be-80970c22d1e4",
+              "leftValue": "={{ Number($json.Amount) }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "92d67154-19ce-4fbf-b3f8-bc191bbd26f4",
+      "name": "Validate Amount"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1y3VKyT65sQ4FcKI3tk4puY5pu6aeHQFRsBTANDg0OSI",
+          "mode": "list",
+          "cachedResultName": "Expense Claim Records",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y3VKyT65sQ4FcKI3tk4puY5pu6aeHQFRsBTANDg0OSI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Claims",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y3VKyT65sQ4FcKI3tk4puY5pu6aeHQFRsBTANDg0OSI/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Claim ID",
+              "lookupValue": "={{ $json[\"Claim ID\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        -96
+      ],
+      "id": "e2a78d7f-3c4d-4977-9764-2bfb37a4109e",
+      "name": "Check Duplicate Claim",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "DxtyceaB5pdv1OGc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "b96a34ff-4cb7-40d0-9fd7-4d5c1dcd18c8",
+              "leftValue": "={{ $json[\"Claim ID\"] ?? \"\" }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        672,
+        -96
+      ],
+      "id": "a636a7a5-24c1-40ac-b7f7-c9bf5e154e9e",
+      "name": "Duplicate Found?"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1y3VKyT65sQ4FcKI3tk4puY5pu6aeHQFRsBTANDg0OSI",
+          "mode": "list",
+          "cachedResultName": "Expense Claim Records",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y3VKyT65sQ4FcKI3tk4puY5pu6aeHQFRsBTANDg0OSI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Claims",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y3VKyT65sQ4FcKI3tk4puY5pu6aeHQFRsBTANDg0OSI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Claim ID": "={{ $('On form submission').first().json[\"Claim ID\"] }}",
+            "Employee Name": "={{ $('On form submission').first().json[\"Employee Name\"] }}",
+            "Email": "={{ $('On form submission').first().json.Email }}",
+            "Amount": "={{ Number($('On form submission').first().json.Amount) }}",
+            "Category": "={{ $('On form submission').first().json.Category }}",
+            "Description": "={{ $('On form submission').first().json.Description ?? \"\" }}",
+            "Status": "Submitted",
+            "Submitted At": "={{ $('On form submission').first().json.submittedAt }}",
+            "Execution ID": "={{ $execution.id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Claim ID",
+              "displayName": "Claim ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Employee Name",
+              "displayName": "Employee Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Submitted At",
+              "displayName": "Submitted At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Execution ID",
+              "displayName": "Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        896,
+        0
+      ],
+      "id": "2081aa78-176a-4661-8c06-51572524bd83",
+      "name": "Save New Claim",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "DxtyceaB5pdv1OGc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').first().json.Email }}",
+        "subject": "=Expense Claim Received: {{ $('On form submission').first().json[\"Claim ID\"] }}",
+        "emailType": "text",
+        "message": "=Hello {{ $('On form submission').first().json[\"Employee Name\"] }},\n\nYour expense claim has been recorded successfully.\n\nClaim ID: {{ $('On form submission').first().json[\"Claim ID\"] }}\nAmount: INR {{ $('On form submission').first().json.Amount }}\nCategory: {{ $('On form submission').first().json.Category }}\nStatus: Submitted\n\nThis confirms receipt of your claim. Approval and reimbursement are pending review.\n\nRegards,\nExpense Automation System",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "21563f16-416e-4ffd-9777-d95e38f4b607",
+      "name": "Send Claim Acknowledgement",
+      "webhookId": "0f712fa3-6df3-4c2c-bd5d-f4148981e865",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "8vW7xA8VbixjdKD2",
+          "name": "Vedant Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').first().json.Email }}",
+        "subject": "=Expense Claim Rejected: {{ $('On form submission').first().json[\"Claim ID\"] }}",
+        "emailType": "text",
+        "message": "=Hello {{ $('On form submission').first().json[\"Employee Name\"] }},\n\nYour expense claim could not be accepted.\n\nClaim ID: {{ $('On form submission').first().json[\"Claim ID\"] }}\nEntered amount: INR {{ $('On form submission').first().json.Amount }}\n\nReason: The expense amount must be greater than zero.\n\nPlease correct the amount and submit again.\n\nRegards,\nExpense Automation System",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        96
+      ],
+      "id": "b2e4ff78-ac1c-4ec3-a371-90fef82ed191",
+      "name": "Reject Invalid Amount",
+      "webhookId": "ecfb8c7d-2f00-45f9-a737-7f60b14493ea",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "8vW7xA8VbixjdKD2",
+          "name": "Vedant Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').first().json.Email }}",
+        "subject": "=Duplicate Expense Claim: {{ $('On form submission').first().json[\"Claim ID\"] }}",
+        "emailType": "text",
+        "message": "=Hello {{ $('On form submission').first().json[\"Employee Name\"] }},\n\nYour expense submission was rejected because this Claim ID already exists.\n\nClaim ID: {{ $('On form submission').first().json[\"Claim ID\"] }}\n\nNo additional claim was created. Please check the Claim ID before submitting again.\n\nRegards,\nExpense Automation System",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        -192
+      ],
+      "id": "a832119e-1fec-4d7c-8f6c-5ac48c8cd792",
+      "name": "Reject Duplicate Claim",
+      "webhookId": "1bb5170f-44a2-48ad-8b54-02ded34b25e5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "8vW7xA8VbixjdKD2",
+          "name": "Vedant Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1y3VKyT65sQ4FcKI3tk4puY5pu6aeHQFRsBTANDg0OSI",
+          "mode": "list",
+          "cachedResultName": "Expense Claim Records",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y3VKyT65sQ4FcKI3tk4puY5pu6aeHQFRsBTANDg0OSI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 376189243,
+          "mode": "list",
+          "cachedResultName": "Audit Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y3VKyT65sQ4FcKI3tk4puY5pu6aeHQFRsBTANDg0OSI/edit#gid=376189243"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Execution ID": "={{ $execution.id }}",
+            "Claim ID": "={{ $('On form submission').first().json[\"Claim ID\"] }}",
+            "Employee Name": "={{ $('On form submission').first().json[\"Employee Name\"] }}",
+            "Amount": "={{ Number($('On form submission').first().json.Amount) }}",
+            "Outcome": "Submitted",
+            "Reason": "Claim recorded and acknowledgement sent",
+            "Timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Execution ID",
+              "displayName": "Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Claim ID",
+              "displayName": "Claim ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Employee Name",
+              "displayName": "Employee Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Outcome",
+              "displayName": "Outcome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1344,
+        0
+      ],
+      "id": "f7b5992c-4af2-4447-b8c5-ec2c15bd8f69",
+      "name": "Log Successful Claim",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "DxtyceaB5pdv1OGc",
+          "name": "Vedant Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1y3VKyT65sQ4FcKI3tk4puY5pu6aeHQFRsBTANDg0OSI",
+          "mode": "list",
+          "cachedResultName": "Expense Claim Records",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y3VKyT65sQ4FcKI3tk4puY5pu6aeHQFRsBTANDg0OSI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 376189243,
+          "mode": "list",
+          "cachedResultName": "Audit Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y3VKyT65sQ4FcKI3tk4puY5pu6aeHQFRsBTANDg0OSI/edit#gid=376189243"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Execution ID": "={{ $execution.id }}",
+            "Claim ID": "={{ $('On form submission').first().json[\"Claim ID\"] }}",
+            "Employee Name": "={{ $('On form submission').first().json[\"Employee Name\"] }}",
+            "Amount": "={{ Number($('On form submission').first().json.Amount) }}",
+            "Outcome": "Rejected",
+            "Reason": "Amount must be greater than zero",
+            "Timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Execution ID",
+              "displayName": "Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Claim ID",
+              "displayName": "Claim ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Employee Name",
+              "displayName": "Employee Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Outcome",
+              "displayName": "Outcome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        96
+      ],
+      "id": "b9627056-8834-400f-89b2-eee30276deb6",
+      "name": "Log Invalid Amount",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "DxtyceaB5pdv1OGc",
+          "name": "Vedant Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1y3VKyT65sQ4FcKI3tk4puY5pu6aeHQFRsBTANDg0OSI",
+          "mode": "list",
+          "cachedResultName": "Expense Claim Records",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y3VKyT65sQ4FcKI3tk4puY5pu6aeHQFRsBTANDg0OSI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 376189243,
+          "mode": "list",
+          "cachedResultName": "Audit Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y3VKyT65sQ4FcKI3tk4puY5pu6aeHQFRsBTANDg0OSI/edit#gid=376189243"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Execution ID": "={{ $execution.id }}",
+            "Claim ID": "={{ $('On form submission').first().json[\"Claim ID\"] }}",
+            "Employee Name": "={{ $('On form submission').first().json[\"Employee Name\"] }}",
+            "Amount": "={{ Number($('On form submission').first().json.Amount) }}",
+            "Outcome": "Rejected",
+            "Reason": "Duplicate Claim ID",
+            "Timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Execution ID",
+              "displayName": "Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Claim ID",
+              "displayName": "Claim ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Employee Name",
+              "displayName": "Employee Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Outcome",
+              "displayName": "Outcome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1120,
+        -192
+      ],
+      "id": "5d26cdf8-44fb-43fd-9d73-390f03c3f0ef",
+      "name": "Log Duplicate Claim",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "DxtyceaB5pdv1OGc",
+          "name": "Vedant Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Validate Amount",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Amount": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate Claim",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reject Invalid Amount",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate Claim": {
+      "main": [
+        [
+          {
+            "node": "Duplicate Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Duplicate Found?": {
+      "main": [
+        [
+          {
+            "node": "Reject Duplicate Claim",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save New Claim",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save New Claim": {
+      "main": [
+        [
+          {
+            "node": "Send Claim Acknowledgement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Claim Acknowledgement": {
+      "main": [
+        [
+          {
+            "node": "Log Successful Claim",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reject Invalid Amount": {
+      "main": [
+        [
+          {
+            "node": "Log Invalid Amount",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reject Duplicate Claim": {
+      "main": [
+        [
+          {
+            "node": "Log Duplicate Claim",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6367802c-0eb0-4853-bb81-fc53c6ef4753",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "364fd297a977ffc213cce98588510340c8dee9dd981b8827227a65e2fcc8a1a2"
+  },
+  "nodeGroups": [],
+  "id": "rTrNZxbYBFzVYrcJ",
+  "tags": []
+}
